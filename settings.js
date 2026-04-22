@@ -198,8 +198,136 @@ function setupDragReorder() {
   });
 }
 
-/** Placeholder functions implemented in Task 7 */
-function renderReminders() {}
-function setupThemeToggle() {}
-async function loadMonthNotes() {}
-function setupExportButtons() {}
+/** Render the reminder toggles and time pickers (one per time-of-day group) */
+function renderReminders() {
+  const prefs  = loadPrefs();
+  const remind = prefs.reminders || {};
+  const list   = document.getElementById('reminders-list');
+  if (!list) return;
+
+  list.innerHTML = ['morning', 'midday', 'night'].map(tod => {
+    const r = remind[tod] || { on: false, time: tod === 'morning' ? '08:00' : tod === 'midday' ? '12:30' : '21:00' };
+    return `<div class="reminder-row" data-tod="${tod}">
+      <span class="reminder-label">${tod.charAt(0).toUpperCase() + tod.slice(1)}</span>
+      <input type="time" class="reminder-time-input" value="${r.time}" data-tod="${tod}">
+      <div class="toggle-switch reminder-toggle ${r.on ? 'on' : ''}" data-tod="${tod}"></div>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('.reminder-toggle').forEach(sw => {
+    sw.addEventListener('click', () => {
+      sw.classList.toggle('on');
+      const tod  = sw.dataset.tod;
+      const time = document.querySelector(`.reminder-time-input[data-tod="${tod}"]`).value;
+      saveReminderPref(tod, sw.classList.contains('on'), time);
+    });
+  });
+
+  document.querySelectorAll('.reminder-time-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const tod = input.dataset.tod;
+      const sw  = document.querySelector(`.reminder-toggle[data-tod="${tod}"]`);
+      saveReminderPref(tod, sw.classList.contains('on'), input.value);
+    });
+  });
+}
+
+/** Persist a reminder preference and reschedule notifications */
+function saveReminderPref(tod, on, time) {
+  const prefs = loadPrefs();
+  if (!prefs.reminders) prefs.reminders = {};
+  prefs.reminders[tod] = { on, time };
+  savePrefs(prefs);
+  if (typeof scheduleReminders === 'function') scheduleReminders();
+}
+
+/** Wire the theme toggle switch in settings */
+function setupThemeToggle() {
+  const sw = document.getElementById('theme-toggle');
+  if (!sw) return;
+  sw.addEventListener('click', () => {
+    sw.classList.toggle('on');
+    const theme = sw.classList.contains('on') ? 'light' : 'dark';
+    const prefs = loadPrefs();
+    prefs.theme = theme;
+    savePrefs(prefs);
+    applyTheme(theme);
+  });
+}
+
+/** Load and wire up the observations textarea and goal inputs for the active month */
+async function loadMonthNotes() {
+  const data  = await getMonth(state.activeMonth) || { observations: '', goals: ['', '', ''] };
+  const obsEl = document.getElementById('observations-input');
+  if (obsEl) {
+    obsEl.value = data.observations || '';
+    obsEl.addEventListener('input', debounce(async () => {
+      const current = await getMonth(state.activeMonth) || { id: state.activeMonth, goals: ['', '', ''] };
+      current.id = state.activeMonth;
+      current.observations = obsEl.value;
+      await saveMonth(current);
+    }, 600));
+  }
+
+  const goalsEl = document.getElementById('goals-inputs');
+  if (goalsEl) {
+    const goals = data.goals || ['', '', ''];
+    goalsEl.innerHTML = goals.map((g, i) => `
+      <div class="goals-input">
+        <span style="color:var(--text-muted);font-size:13px;">${i + 1}.</span>
+        <input type="text" class="goal-input" data-idx="${i}" value="${escapeHtml(g)}" placeholder="Goal ${i + 1}" maxlength="80">
+      </div>`).join('');
+
+    goalsEl.querySelectorAll('.goal-input').forEach(input => {
+      input.addEventListener('input', debounce(async () => {
+        const current = await getMonth(state.activeMonth) || { id: state.activeMonth, observations: '' };
+        current.id = state.activeMonth;
+        current.goals = Array.from(goalsEl.querySelectorAll('.goal-input')).map(el => el.value);
+        await saveMonth(current);
+      }, 600));
+    });
+  }
+}
+
+/** Simple debounce: delays fn by ms after last call */
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/** Wire the JSON and CSV export buttons */
+function setupExportButtons() {
+  document.getElementById('export-json-btn')?.addEventListener('click', exportJSON);
+  document.getElementById('export-csv-btn')?.addEventListener('click', exportCSV);
+}
+
+/** Export all data as a JSON file */
+async function exportJSON() {
+  const habits = loadHabits();
+  const logs   = await getAllLogs();
+  const months = await getAllMonths();
+  const blob = new Blob([JSON.stringify({ habits, logs, months }, null, 2)], { type: 'application/json' });
+  triggerDownload(blob, `habit-wheel-export-${currentYearMonth()}.json`);
+}
+
+/** Export all logs as a CSV file */
+async function exportCSV() {
+  const habits = loadHabits();
+  const logs   = await getAllLogs();
+  const rows   = [['date', 'habit', 'timeOfDay', 'status']];
+  logs.forEach(l => {
+    const h = habits.find(h => h.id === l.habitId);
+    if (h) rows.push([l.date, h.name, h.timeOfDay, l.status || '']);
+  });
+  const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  triggerDownload(blob, `habit-wheel-export-${currentYearMonth()}.csv`);
+}
+
+/** Trigger a browser file download */
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
