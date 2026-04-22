@@ -213,7 +213,7 @@ async function openDayPopup(dayNum, yearMonth) {
   overlay.classList.remove('hidden');
 
   document.getElementById('popup-close-btn').addEventListener('click', closeDayPopup);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeDayPopup(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeDayPopup(); }, { once: true });
 
   if (!readOnly) attachToggleListeners(yearMonth);
 }
