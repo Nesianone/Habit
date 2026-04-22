@@ -14,9 +14,10 @@ function completionRate(habitId, logs, yearMonth) {
   return countDays > 0 ? Math.round((done / countDays) * 100) : 0;
 }
 
-/** Longest streak for a habit within a month */
+/** Longest streak for a habit within a month (only counts elapsed days) */
 function longestStreakInMonth(habitId, logs, yearMonth) {
-  const days = daysInMonth(yearMonth);
+  const isThisMonth = yearMonth === currentYearMonth();
+  const days = isThisMonth ? new Date().getDate() : daysInMonth(yearMonth);
   let max = 0, cur = 0;
   for (let d = 1; d <= days; d++) {
     const dateStr = `${yearMonth}-${String(d).padStart(2, '0')}`;
@@ -25,6 +26,11 @@ function longestStreakInMonth(habitId, logs, yearMonth) {
     else cur = 0;
   }
   return max;
+}
+
+/** Escape HTML special chars to prevent injection when inserting habit names into innerHTML */
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /** Pick bar/dot colour based on completion rate */
@@ -77,7 +83,7 @@ async function renderDashboard(yearMonth) {
       ${rates.map(h => `
         <div class="habit-bar-row">
           <div class="habit-bar-meta">
-            <span>${h.name}</span>
+            <span>${escapeHtml(h.name)}</span>
             <span style="color:${rateColour(h.rate)}">${h.rate}%</span>
           </div>
           <div class="bar-track">
@@ -93,7 +99,7 @@ async function renderDashboard(yearMonth) {
           <div class="streak-card">
             <div class="streak-num">${h.streak}</div>
             <div class="streak-unit">days</div>
-            <div class="streak-habit">${h.name.split(' ')[0]}</div>
+            <div class="streak-habit">${escapeHtml(h.name.split(' ')[0])}</div>
           </div>`).join('')}
       </div>
     </div>
@@ -103,7 +109,7 @@ async function renderDashboard(yearMonth) {
       ${focus.map(h => `
         <div class="focus-item">
           <div class="focus-dot" style="background:${rateColour(h.rate)}"></div>
-          <div class="focus-name">${h.name}</div>
+          <div class="focus-name">${escapeHtml(h.name)}</div>
           <div class="focus-pct" style="color:${rateColour(h.rate)}">${h.rate}%</div>
         </div>`).join('')}
     </div>
