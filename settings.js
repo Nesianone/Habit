@@ -106,9 +106,9 @@ function showAddHabitForm() {
     </div>`;
 
   let selectedTod = 'morning';
-  document.querySelectorAll('.tod-btn').forEach(btn => {
+  area.querySelectorAll('.tod-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tod-btn').forEach(b => b.classList.remove('active'));
+      area.querySelectorAll('.tod-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedTod = btn.dataset.tod;
     });
@@ -148,9 +148,9 @@ function showEditHabitForm(habitId) {
     </div>`;
 
   let selectedTod = habit.timeOfDay;
-  document.querySelectorAll('.tod-btn').forEach(btn => {
+  area.querySelectorAll('.tod-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tod-btn').forEach(b => b.classList.remove('active'));
+      area.querySelectorAll('.tod-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedTod = btn.dataset.tod;
     });
