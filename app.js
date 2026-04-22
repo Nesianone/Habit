@@ -1,14 +1,14 @@
-// Shared app state
-const state = {
-  activeScreen: 'wheel',
-  activeMonth: currentYearMonth(), // e.g. "2026-04"
-};
-
 /** Returns "YYYY-MM" for today */
 function currentYearMonth() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
+
+// Shared app state
+const state = {
+  activeScreen: 'wheel',
+  activeMonth: currentYearMonth(), // e.g. "2026-04"
+};
 
 /** Load habits from localStorage (returns array) */
 function loadHabits() {
