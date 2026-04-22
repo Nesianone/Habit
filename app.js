@@ -111,4 +111,62 @@ function setupNavListeners() {
   });
 }
 
+/**
+ * On first open of a new month, prompt user to add observations
+ * for the previous month before they start the new one.
+ */
+async function checkMonthCloseOut() {
+  const lastSeen = localStorage.getItem('lastSeenMonth');
+  const now      = currentYearMonth();
+  localStorage.setItem('lastSeenMonth', now);
+
+  if (!lastSeen || lastSeen === now) return; // same month or first run
+
+  // Build label for previous month
+  const [y, m] = lastSeen.split('-').map(Number);
+  const prevLabel = new Date(y, m - 1, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' });
+  const nextLabel = new Date(y, m, 1).toLocaleString(undefined, { month: 'long' });
+
+  const overlay = document.getElementById('closeout-overlay');
+  const modal   = document.getElementById('closeout-modal');
+
+  modal.innerHTML = `
+    <div class="closeout-title">How did ${prevLabel} go?</div>
+    <div class="closeout-sub">Add your observations before starting ${nextLabel}.</div>
+    <div class="section-label">Observations</div>
+    <textarea id="closeout-obs" placeholder="Reflect on last month..." style="margin-bottom:14px"></textarea>
+    <div class="section-label">Key Goals for ${nextLabel}</div>
+    ${[0,1,2].map(i => `
+      <div class="goals-input">
+        <span style="color:var(--text-muted);font-size:13px;">${i+1}.</span>
+        <input type="text" class="closeout-goal" data-idx="${i}" placeholder="Goal ${i+1}" maxlength="80">
+      </div>`).join('')}
+    <button class="btn-primary" id="closeout-save-btn" style="margin-top:16px">Save & Continue</button>
+    <button class="btn-secondary" id="closeout-skip-btn" style="margin-top:8px">Skip</button>
+  `;
+
+  // Pre-fill if data already exists for previous month
+  const existing = await getMonth(lastSeen);
+  if (existing) {
+    document.getElementById('closeout-obs').value = existing.observations || '';
+    document.querySelectorAll('.closeout-goal').forEach((el, i) => {
+      el.value = (existing.goals || [])[i] || '';
+    });
+  }
+
+  overlay.classList.remove('hidden');
+
+  async function saveAndClose() {
+    const observations = document.getElementById('closeout-obs').value;
+    const goals = Array.from(document.querySelectorAll('.closeout-goal')).map(el => el.value);
+    await saveMonth({ id: lastSeen, observations, goals });
+    overlay.classList.add('hidden');
+  }
+
+  document.getElementById('closeout-save-btn').addEventListener('click', saveAndClose);
+  document.getElementById('closeout-skip-btn').addEventListener('click', () => {
+    overlay.classList.add('hidden');
+  });
+}
+
 document.addEventListener('DOMContentLoaded', init);
