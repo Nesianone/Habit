@@ -20,7 +20,8 @@ function openDB() {
     };
 
     req.onsuccess = e => { _db = e.target.result; resolve(_db); };
-    req.onerror  = e => reject(e.target.error);
+    req.onerror   = e => reject(e.target.error);
+    req.onblocked = () => reject(new Error('DB upgrade blocked — close other tabs'));
   });
 }
 
@@ -30,6 +31,7 @@ function tx(storeName, mode, fn) {
     const t = _db.transaction(storeName, mode);
     const store = t.objectStore(storeName);
     const req = fn(store);
+    if (!req) { reject(new Error('tx: fn must return an IDBRequest')); return; }
     req.onsuccess = e => resolve(e.target.result);
     req.onerror   = e => reject(e.target.error);
   });
@@ -44,6 +46,8 @@ function getLogsForMonth(yearMonth) {
     const t = _db.transaction('logs', 'readonly');
     const store = t.objectStore('logs');
     const index = store.index('by_date');
+    // '31' is safe as an upper bound even for shorter months because IDB date strings
+    // sort lexicographically and no cross-month keys will match this range.
     const range = IDBKeyRange.bound(`${yearMonth}-01`, `${yearMonth}-31`);
     const req = index.getAll(range);
     req.onsuccess = e => resolve(e.target.result);
@@ -56,8 +60,8 @@ function getLogsForMonth(yearMonth) {
  * log: { habitId, date "YYYY-MM-DD", status "done"|"missed"|null }
  */
 function saveLog(log) {
-  log.id = `${log.habitId}-${log.date}`;
-  return tx('logs', 'readwrite', store => store.put(log));
+  const entry = { ...log, id: `${log.habitId}-${log.date}` };
+  return tx('logs', 'readwrite', store => store.put(entry));
 }
 
 /** Get month record { id, observations, goals[] } or null */
@@ -70,7 +74,7 @@ function getMonth(yearMonth) {
  * Callers must always provide monthData.id — it is required.
  */
 function saveMonth(monthData) {
-  if (!monthData.id) throw new Error('saveMonth: monthData.id is required');
+  if (!monthData.id) return Promise.reject(new Error('saveMonth: monthData.id is required'));
   return tx('months', 'readwrite', store => store.put(monthData));
 }
 
