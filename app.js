@@ -99,6 +99,11 @@ async function renderWheelScreen() {
   };
 }
 
+/** Render the dashboard for the active month */
+async function renderDashboardScreen() {
+  await renderDashboard(state.activeMonth);
+}
+
 /** Wire up the bottom nav buttons */
 function setupNavListeners() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
