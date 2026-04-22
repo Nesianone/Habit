@@ -13,7 +13,15 @@
 
   <!-- Screens -->
   <div id="screen-onboarding" class="screen"></div>
-  <div id="screen-wheel"      class="screen hidden"></div>
+  <div id="screen-wheel" class="screen hidden">
+    <div class="wheel-header">
+      <button class="wheel-nav-btn" id="btn-prev-month">&#8592;</button>
+      <span class="wheel-month" id="wheel-month-label"></span>
+      <button class="wheel-nav-btn" id="btn-next-month" disabled>&#8594;</button>
+    </div>
+    <div id="wheel-container" style="padding:8px 0;"></div>
+    <div class="legend"></div>
+  </div>
   <div id="screen-dashboard"  class="screen hidden"></div>
   <div id="screen-settings"   class="screen hidden"></div>
 

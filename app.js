@@ -69,6 +69,36 @@ async function init() {
   scheduleReminders();
 }
 
+/** Render the wheel screen: builds the SVG wheel, legend, and wires up month navigation */
+async function renderWheelScreen() {
+  const habits = loadHabits();
+  const logs   = await getLogsForMonth(state.activeMonth);
+  const [y, m] = state.activeMonth.split('-').map(Number);
+  const label  = new Date(y, m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  document.getElementById('wheel-month-label').textContent = label;
+
+  const isCurrentMonth = state.activeMonth === currentYearMonth();
+  document.getElementById('btn-next-month').disabled = isCurrentMonth;
+
+  renderWheel(habits, logs, state.activeMonth);
+  renderLegend(habits, logs, state.activeMonth);
+
+  document.getElementById('btn-prev-month').onclick = () => {
+    const [y, m] = state.activeMonth.split('-').map(Number);
+    const prev   = new Date(y, m - 2, 1);
+    state.activeMonth = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+    renderWheelScreen();
+  };
+  document.getElementById('btn-next-month').onclick = () => {
+    if (state.activeMonth === currentYearMonth()) return;
+    const [y, m] = state.activeMonth.split('-').map(Number);
+    const next   = new Date(y, m, 1);
+    state.activeMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+    renderWheelScreen();
+  };
+}
+
 /** Wire up the bottom nav buttons */
 function setupNavListeners() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
