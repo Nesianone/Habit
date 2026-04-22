@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <title>Habit Wheel</title>
+</head>
+<body class="theme-dark">
+
+  <!-- Screens -->
+  <div id="screen-onboarding" class="screen"></div>
+  <div id="screen-wheel"      class="screen hidden"></div>
+  <div id="screen-dashboard"  class="screen hidden"></div>
+  <div id="screen-settings"   class="screen hidden"></div>
+
+  <!-- Bottom nav (hidden during onboarding) -->
+  <nav id="bottom-nav" class="hidden">
+    <button class="nav-btn active" data-screen="wheel">
+      <span class="nav-icon">⭕</span>
+      <span class="nav-label">Wheel</span>
+    </button>
+    <button class="nav-btn" data-screen="dashboard">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-btn" data-screen="settings">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Day popup overlay -->
+  <div id="day-popup-overlay" class="overlay hidden">
+    <div id="day-popup" class="popup"></div>
+  </div>
+
+  <!-- Month close-out modal -->
+  <div id="closeout-overlay" class="overlay hidden">
+    <div id="closeout-modal" class="popup"></div>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="wheel.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="settings.js"></script>
+  <script src="notifications.js"></script>
+  <script src="onboarding.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
