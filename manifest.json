@@ -2,7 +2,7 @@
   "name": "Habit Wheel",
   "short_name": "Habits",
   "description": "Track your daily habits on a circular monthly wheel",
-  "start_url": "/",
+  "start_url": "/Habit/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
